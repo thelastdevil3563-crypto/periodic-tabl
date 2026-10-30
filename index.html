@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>کاوشگر جدول تناوبی</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap');
+
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:radial-gradient(ellipse at top,#172d4a,#080d19 55%);
+ color:#edf5ff;
+ font-family:Vazirmatn,Tahoma,sans-serif
+}
+.wrap{max-width:1400px;margin:auto;padding:18px}
+header,.top,.tools{
+ display:flex;align-items:center;
+ justify-content:space-between;gap:12px;flex-wrap:wrap
+}
+header{margin-bottom:24px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{
+ background:linear-gradient(135deg,#53e0e8,#a78bfa);
+ color:#07111f;border-radius:14px;
+ padding:10px 15px;font-size:25px;font-weight:900
+}
+h1{font-size:22px;margin:0}
+p{color:#91a4bf;margin:4px 0}
+.btn,.filter{
+ border:1px solid #2b3c59;background:#132039;
+ color:#edf5ff;border-radius:12px;padding:9px 13px;cursor:pointer
+}
+.btn:hover,.filter.active{border-color:#53e0e8;color:#53e0e8}
+.hero{margin:20px 0}
+.hero h2{font-size:clamp(23px,4vw,36px);margin:0}
+.hero p{font-size:14px}
+.search{
+ flex:1;min-width:220px;padding:13px;border-radius:12px;
+ background:#101a2c;border:1px solid #2b3c59;color:white;font:inherit
+}
+.filters{display:flex;gap:7px;overflow:auto;margin:12px 0}
+.filter{white-space:nowrap;font-size:12px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;color:#aab9cf;font-size:11px;margin:12px 0}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px}
+.tablebox{overflow-x:auto;padding-bottom:10px}
+.table{
+ display:grid;grid-template-columns:repeat(18,minmax(42px,1fr));
+ gap:4px;min-width:820px
+}
+.el{
+ border:1px solid color-mix(in srgb,var(--c) 55%,#263752);
+ background:linear-gradient(145deg,color-mix(in srgb,var(--c) 18%,#111b2d),#101a2b);
+ border-radius:8px;min-height:65px;padding:4px 2px;
+ color:white;cursor:pointer;text-align:center
+}
+.el:hover,.el.sel{outline:2px solid var(--c);transform:translateY(-2px)}
+.num{display:block;text-align:right;font-size:9px;color:#91a4bf}
+.sym{display:block;font-size:19px;font-weight:800;color:var(--c)}
+.nm{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.label{grid-column:1/-1;color:#91a4bf;font-size:11px;padding:8px 2px 0}
+.alkali{--c:#ff8c69}
+.alkaline{--c:#f6bd60}
+.transition{--c:#53c7e8}
+.post{--c:#7fafff}
+.metalloid{--c:#b49af7}
+.nonmetal{--c:#70d6a6}
+.halogen{--c:#f28bb7}
+.noble{--c:#c59bff}
+.lanthanoid{--c:#e3a1ed}
+.actinoid{--c:#ed9d87}
+.below{display:grid;grid-template-columns:1fr 300px;gap:14px;margin-top:16px}
+.panel{background:#101a2c;border:1px solid #263752;border-radius:16px;padding:16px;min-width:0}
+.detailHead{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.big{font-size:32px;font-weight:900;color:var(--c);background:#183148;border:1px solid var(--c);border-radius:15px;padding:13px}
+.detailHead h3{margin:0;font-size:20px}
+.props{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.prop,.uses{background:#0b1423;border:1px solid #1d2b42;border-radius:10px;padding:10px}
+.prop small{display:block;color:#91a4bf;font-size:10px}
+.prop b{font-size:13px;overflow-wrap:anywhere}
+.uses{margin-top:9px;font-size:13px;line-height:1.8}
+.fav{display:flex;justify-content:space-between;padding:9px;margin:7px 0;background:#0b1423;border-radius:9px;font-size:12px}
+.fav button{color:#53e0e8;background:none;border:0}
+.muted{color:#91a4bf;font-size:12px;line-height:1.8}
+.empty{text-align:center;color:#91a4bf;padding:28px 8px}
+@media(max-width:700px){
+ .wrap{padding:12px}
+ .below{grid-template-columns:1fr}
+ .table{min-width:800px}
+ .hero{margin:15px 0}
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<header>
+ <div class="brand">
+  <div class="logo">⚛</div>
+  <div>
+   <h1 id="title">کاوشگر جدول تناوبی</h1>
+   <p>Periodic Table Explorer · 118 Elements</p>
+  </div>
+ </div>
+ <div>
+  <button class="btn" id="lang">EN / فارسی</button>
+  <button class="btn" id="favOnly">★ علاقه‌مندی‌ها</button>
+ </div>
+</header>
+
+<section class="hero">
+ <h2 id="hero">جهان عناصر را کشف کن</h2>
+ <p id="sub">روی هر عنصر بزن تا ویژگی‌ها و کاربردهای آن را ببینی.</p>
+</section>
+
+<div class="tools">
+ <input id="search" class="search" placeholder="جست‌وجوی نام، نماد یا عدد اتمی...">
+ <button class="btn" id="clear">پاک کردن</button>
+ <b id="count">۱۱۸ عنصر</b>
+</div>
+
+<div class="filters" id="filters"></div>
+<div class="legend" id="legend"></div>
+
+<div class="tablebox">
+ <div class="table" id="table"></div>
+</div>
+
+<div class="below">
+ <section class="panel" id="detail">
+  <div class="empty">برای مشاهده جزئیات، یک عنصر را انتخاب کن.</div>
+ </section>
+
+ <aside class="panel">
+  <h3 id="favTitle">★ عناصر منتخب</h3>
+  <div id="favs" class="muted">هنوز عنصری انتخاب نشده است.</div>
+  <p class="muted">مقادیر بعضی عناصر مصنوعی و ناپایدار تقریبی یا پیش‌بینی‌شده‌اند.</p>
+ </aside>
+</div>
+
+<p class="muted" style="text-align:center;margin:20px">
+ Periodic Table Explorer · برای آموزش عمومی
+</p>
+</div>
+
+<script>
+// اطلاعات عناصر:
+// نماد، نام انگلیسی، نام فارسی، گروه، دوره، دسته، جرم اتمی،
+// آرایش الکترونی، حالت، نقطه ذوب، نقطه جوش، کاربرد
+
+const raw = [
+["H","Hydrogen","هیدروژن",1,1,"nonmetal","1.008","1s¹","Gas","−259.16 °C","−252.87 °C","سوخت، سلول‌های سوختی"],
+["He","Helium","هلیم",18,1,"noble","4.0026","1s²","Gas","−272.2 °C","−268.93 °C","بالن‌ها، خنک‌سازی"],
+["Li","Lithium","لیتیوم",1,2,"alkali","6.94","[He] 2s¹","Solid","180.54 °C","1342 °C","باتری‌های قابل شارژ"],
+["Be","Beryllium","بریلیم",2,2,"alkaline","9.0122","[He] 2s²","Solid","1287 °C","2469 °C","آلیاژهای سبک"],
+["B","Boron","بور",13,2,"metalloid","10.81","[He] 2s² 2p¹","Solid","2076 °C","3927 °C","شیشه‌های مقاوم"],
+["C","Carbon","کربن",14,2,"nonmetal","12.011","[He] 2s² 2p²","Solid","Sublimes at 3642 °C","—","مواد آلی، گرافیت، الماس"],
+["N","Nitrogen","نیتروژن",15,2,"nonmetal","14.007","[He] 2s² 2p³","Gas","−210.0 °C","−195.8 °C","کودها، جو زمین"],
+["O","Oxygen","اکسیژن",16,2,"nonmetal","15.999","[He] 2s² 2p⁴","Gas","−218.79 °C","−182.96 °C","تنفس، پزشکی"],
+["F","Fluorine","فلوئور",17,2,"halogen","18.998","[He] 2s² 2p⁵","Gas","−219.67 °C","−188.11 °C","ترکیبات فلوئور"],
+["Ne","Neon","نئون",18,2,"noble","20.180","[He] 2s² 2p⁶","Gas","−248.59 °C","−246.08 °C","تابلوهای نئونی"],
+["Na","Sodium","سدیم",1,3,"alkali","22.990","[Ne] 3s¹","Solid","97.79 °C","883 °C","نمک‌ها، صنایع شیمیایی"],
+["Mg","Magnesium","منیزیم",2,3,"alkaline","24.305","[Ne] 3s²","Solid","650 °C","1091 °C","آلیاژها"],
+["Al","Aluminium","آلومینیوم",13,3,"post","26.982","[Ne] 3s² 3p¹","Solid","660.32 °C","2519 °C","قوطی‌ها، هواپیما"],
+["Si","Silicon","سیلیسیم",14,3,"metalloid","28.085","[Ne] 3s² 3p²","Solid","1414 °C","3265 °C","تراشه‌ها، پنل خورشیدی"],
+["P","Phosphorus","فسفر",15,3,"nonmetal","30.974","[Ne] 3s² 3p³","Solid","44.1 °C (white)","280.5 °C (white)","کودها، زیست‌شناسی"],
+["S","Sulfur","گوگرد",16,3,"nonmetal","32.06","[Ne] 3s² 3p⁴","Solid","115.21 °C","444.6 °C","اسید سولفوریک"],
+["Cl","Chlorine","کلر",17,3,"halogen","35.45","[Ne] 3s² 3p⁵","Gas","−101.5 °C","−34.04 °C","ضدعفونی آب"],
+["Ar","Argon","آرگون",18,3,"noble","39.948","[Ne] 3s² 3p⁶","Gas","−189.34 °C","−185.85 °C","جوشکاری، لامپ‌ها"],
+["K","Potassium","پتاسیم",1,4,"alkali","39.098","[Ar] 4s¹","Solid","63.38 °C","759 °C","کودها"],
+["Ca","Calcium","کلسیم",2,4,"alkaline","40.078","[Ar] 4s²","Solid","842 °C","1484 °C","استخوان، سیمان"],
+["Sc","Scandium","اسکاندیم",3,4,"transition","44.956","[Ar] 3d¹ 4s²","Solid","1541 °C","2836 °C","آلیاژهای آلومینیوم"],
+["Ti","Titanium","تیتانیوم",4,4,"transition","47.867","[Ar] 3d² 4s²","Solid","1668 °C","3287 °C","هوافضا، ایمپلنت"],
+["V","Vanadium","وانادیم",5,4,"transition","50.942","[Ar] 3d³ 4s²","Solid","1910 °C","3407 °C","فولاد مقاوم"],
+["Cr","Chromium","کروم",6,4,"transition","51.996","[Ar] 3d⁵ 4s¹","Solid","1907 °C","2671 °C","فولاد ضدزنگ"],
+["Mn","Manganese","منگنز",7,4,"transition","54.938","[Ar] 3d⁵ 4s²","Solid","1246 °C","2061 °C","فولاد و باتری"],
+["Fe","Iron","آهن",8,4,"transition","55.845","[Ar] 3d⁶ 4s²","Solid","1538 °C","2861 °C","ساختمان، ابزار"],
+["Co","Cobalt","کبالت",9,4,"transition","58.933","[Ar] 3d⁷ 4s²","Solid","1495 °C","2927 °C","باتری، آلیاژها"],
+["Ni","Nickel","نیکل",10,4,"transition","58.693","[Ar] 3d⁸ 4s²","Solid","1455 °C","2913 °C","فولاد ضدزنگ"],
+["Cu","Copper","مس",11,4,"transition","63.546","[Ar] 3d¹⁰ 4s¹","Solid","1084.62 °C","2562 °C","سیم برق"],
+["Zn","Zinc","روی",12,4,"transition","65.38","[Ar] 3d¹⁰ 4s²","Solid","419.53 °C","907 °C","گالوانیزه"],
+["Ga","Gallium","گالیم",13,4,"post","69.723","[Ar] 3d¹⁰ 4s² 4p¹","Solid","29.76 °C","2204 °C","نیمه‌رساناها"],
+["Ge","Germanium","ژرمانیم",14,4,"metalloid","72.630","[Ar] 3d¹⁰ 4s² 4p²","Solid","938.25 °C","2820 °C","فیبر نوری"],
+["As","Arsenic","آرسنیک",15,4,"metalloid","74.922","[Ar] 3d¹⁰ 4s² 4p³","Solid","817 °C (sublimes)","—","نیمه‌رساناها"],
+["Se","Selenium","سلنیوم",16,4,"nonmetal","78.971","[Ar] 3d¹⁰ 4s² 4p⁴","Solid","221 °C","685 °C","شیشه، الکترونیک"],
+["Br","Bromine","برم",17,4,"halogen","79.904","[Ar] 3d¹⁰ 4s² 4p⁵","Liquid","−7.2 °C","58.8 °C","مواد شیمیایی"],
+["Kr","Krypton","کریپتون",18,4,"noble","83.798","[Ar] 3d¹⁰ 4s² 4p⁶","Gas","−157.36 °C","−153.22 °C","لامپ‌های ویژه"],
+["Rb","Rubidium","روبیدیم",1,5,"alkali","85.468","[Kr] 5s¹","Solid","39.31 °C","688 °C","پژوهش اتمی"],
+["Sr","Strontium","استرانسیم",2,5,"alkaline","87.62","[Kr] 5s²","Solid","777 °C","1382 °C","رنگ قرمز آتش‌بازی"],
+["Y","Yttrium","ایتریم",3,5,"transition","88.906","[Kr] 4d¹ 5s²","Solid","1526 °C","3345 °C","فسفرهای نمایشگر"],
+["Zr","Zirconium","زیرکونیوم",4,5,"transition","91.224","[Kr] 4d² 5s²","Solid","1855 °C","4409 °C","راکتورهای هسته‌ای"],
+["Nb","Niobium","نیوبیوم",5,5,"transition","92.906","[Kr] 4d⁴ 5s¹","Solid","2477 °C","4744 °C","ابررساناها"],
+["Mo","Molybdenum","مولیبدن",6,5,"transition","95.95","[Kr] 4d⁵ 5s¹","Solid","2623 °C","4639 °C","فولادهای آلیاژی"],
+["Tc","Technetium","تکنسیم",7,5,"transition","[98]","[Kr] 4d⁵ 5s²","Solid","2157 °C","4265 °C","تصویربرداری پزشکی"],
+["Ru","Ruthenium","روتنیم",8,5,"transition","101.07","[Kr] 4d⁷ 5s¹","Solid","2334 °C","4150 °C","کاتالیزورها"],
+["Rh","Rhodium","رودیم",9,5,"transition","102.91","[Kr] 4d⁸ 5s¹","Solid","1964 °C","3695 °C","مبدل کاتالیستی"],
+["Pd","Palladium","پالادیم",10,5,"transition","106.42","[Kr] 4d¹⁰","Solid","1554.9 °C","2963 °C","کاتالیزورها"],
+["Ag","Silver","نقره",11,5,"transition","107.87","[Kr] 4d¹⁰ 5s¹","Solid","961.78 °C","2162 °C","جواهر، الکترونیک"],
+["Cd","Cadmium","کادمیم",12,5,"transition","112.41","[Kr] 4d¹⁰ 5s²","Solid","321.07 °C","767 °C","کاربردهای صنعتی محدود"],
+["In","Indium","ایندیوم",13,5,"post","114.82","[Kr] 4d¹⁰ 5s² 5p¹","Solid","156.6 °C","2072 °C","نمایشگر لمسی"],
+["Sn","Tin","قلع",14,5,"post","118.71","[Kr] 4d¹⁰ 5s² 5p²","Solid","231.93 °C","2602 °C","لحیم‌کاری"],
+["Sb","Antimony","آنتیموان",15,5,"metalloid","121.76","[Kr] 4d¹⁰ 5s² 5p³","Solid","630.63 °C","1587 °C","مواد ضدحریق"],
+["Te","Tellurium","تلوریم",16,5,"metalloid","127.60","[Kr] 4d¹⁰ 5s² 5p⁴","Solid","449.51 °C","988 °C","پنل خورشیدی"],
+["I","Iodine","ید",17,5,"halogen","126.90","[Kr] 4d¹⁰ 5s² 5p⁵","Solid","113.7 °C","184.3 °C","ضدعفونی‌کننده"],
+["Xe","Xenon","زنون",18,5,"noble","131.29","[Kr] 4d¹⁰ 5s² 5p⁶","Gas","−111.8 °C","−108.1 °C","لامپ و تصویربرداری"],
+["Cs","Caesium","سزیم",1,6,"alkali","132.91","[Xe] 6s¹","Solid","28.44 °C","671 °C","ساعت اتمی"],
+["Ba","Barium","باریم",2,6,"alkaline","137.33","[Xe] 6s²","Solid","727 °C","1845 °C","تصویربرداری پزشکی"],
+["La","Lanthanum","لانتان",3,6,"lanthanoid","138.91","[Xe] 5d¹ 6s²","Solid","920 °C","3464 °C","عدسی دوربین"],
+["Ce","Cerium","سریم",3,8,"lanthanoid","140.12","[Xe] 4f¹ 5d¹ 6s²","Solid","798 °C","3443 °C","صیقل شیشه"],
+["Pr","Praseodymium","پرازئودیمیم",3,8,"lanthanoid","140.91","[Xe] 4f³ 6s²","Solid","931 °C","3520 °C","آهنرباها"],
+["Nd","Neodymium","نئودیمیم",3,8,"lanthanoid","144.24","[Xe] 4f⁴ 6s²","Solid","1024 °C","3074 °C","آهنربای قوی"],
+["Pm","Promethium","پرومتیم",3,8,"lanthanoid","[145]","[Xe] 4f⁵ 6s²","Solid","1042 °C","3000 °C","باتری‌های هسته‌ای پژوهشی"],
+["Sm","Samarium","ساماریم",3,8,"lanthanoid","150.36","[Xe] 4f⁶ 6s²","Solid","1072 °C","1794 °C","آهنرباها"],
+["Eu","Europium","یوروپیم",3,8,"lanthanoid","151.96","[Xe] 4f⁷ 6s²","Solid","822 °C","1529 °C","فسفر نمایشگر"],
+["Gd","Gadolinium","گادولینیم",3,8,"lanthanoid","157.25","[Xe] 4f⁷ 5d¹ 6s²","Solid","1313 °C","3273 °C","MRI"],
+["Tb","Terbium","تربیم",3,8,"lanthanoid","158.93","[Xe] 4f⁹ 6s²","Solid","1356 °C","3230 °C","فسفر سبز"],
+["Dy","Dysprosium","دیسپروزیم",3,8,"lanthanoid","162.50","[Xe] 4f¹⁰ 6s²","Solid","1412 °C","2567 °C","آهنرباهای ویژه"],
+["Ho","Holmium","هولمیم",3,8,"lanthanoid","164.93","[Xe] 4f¹¹ 6s²","Solid","1474 °C","2695 °C","لیزرها"],
+["Er","Erbium","اربیوم",3,8,"lanthanoid","167.26","[Xe] 4f¹² 6s²","Solid","1529 °C","2868 °C","فیبر نوری"],
+["Tm","Thulium","تولیم",3,8,"lanthanoid","168.93","[Xe] 4f¹³ 6s²","Solid","1545 °C","1950 °C","لیزر پزشکی"],
+["Yb","Ytterbium","ایتربیم",3,8,"lanthanoid","173.05","[Xe] 4f¹⁴ 6s²","Solid","824 °C","1196 °C","لیزر و پژوهش"],
+["Lu","Lutetium","لوتتیم",3,8,"lanthanoid","174.97","[Xe] 4f¹⁴ 5d¹ 6s²","Solid","1663 °C","3402 °C","آشکارسازهای پزشکی"],
+["Hf","Hafnium","هافنیم",4,6,"transition","178.49","[Xe] 4f¹⁴ 5d² 6s²","Solid","2233 °C","4603 °C","میله کنترل راکتور"],
+["Ta","Tantalum","تانتال",5,6,"transition","180.95","[Xe] 4f¹⁴ 5d³ 6s²","Solid","3017 °C","5458 °C","خازن‌ها"],
+["W","Tungsten","تنگستن",6,6,"transition","183.84","[Xe] 4f¹⁴ 5d⁴ 6s²","Solid","3422 °C","5555 °C","ابزار برش"],
+["Re","Rhenium","رنیوم",7,6,"transition","186.21","[Xe] 4f¹⁴ 5d⁵ 6s²","Solid","3186 °C","5596 °C","موتور جت"],
+["Os","Osmium","اسمیم",8,6,"transition","190.23","[Xe] 4f¹⁴ 5d⁶ 6s²","Solid","3033 °C","5012 °C","آلیاژهای سخت"],
+["Ir","Iridium","ایریدیم",9,6,"transition","192.22","[Xe] 4f¹⁴ 5d⁷ 6s²","Solid","2446 °C","4428 °C","تجهیزات مقاوم"],
+["Pt","Platinum","پلاتین",10,6,"transition","195.08","[Xe] 4f¹⁴ 5d⁹ 6s¹","Solid","1768.3 °C","3825 °C","کاتالیزور، جواهر"],
+["Au","Gold","طلا",11,6,"transition","196.97","[Xe] 4f¹⁴ 5d¹⁰ 6s¹","Solid","1064.18 °C","2856 °C","جواهر، الکترونیک"],
+["Hg","Mercury","جیوه",12,6,"transition","200.59","[Xe] 4f¹⁴ 5d¹⁰ 6s²","Liquid","−38.83 °C","356.73 °C","کاربردهای تخصصی محدود"],
+["Tl","Thallium","تالیم",13,6,"post","204.38","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹","Solid","304 °C","1473 °C","کاربردهای تخصصی"],
+["Pb","Lead","سرب",14,6,"post","207.2","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²","Solid","327.46 °C","1749 °C","باتری سربی"],
+["Bi","Bismuth","بیسموت",15,6,"post","208.98","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³","Solid","271.4 °C","1564 °C","آلیاژها، داروها"],
+["Po","Polonium","پولونیم",16,6,"post","[209]","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴","Solid","254 °C","962 °C","پژوهش هسته‌ای"],
+["At","Astatine","استاتین",17,6,"halogen","[210]","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵","Solid","302 °C","337 °C","پژوهش پزشکی"],
+["Rn","Radon","رادون",18,6,"noble","[222]","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶","Gas","−71 °C","−61.7 °C","پژوهش رادیواکتیویته"],
+["Fr","Francium","فرانسیم",1,7,"alkali","[223]","[Rn] 7s¹","Solid","27 °C (estimated)","677 °C (estimated)","پژوهش علمی"],
+["Ra","Radium","رادیم",2,7,"alkaline","[226]","[Rn] 7s²","Solid","700 °C","1737 °C","پژوهش هسته‌ای"],
+["Ac","Actinium","اکتینیم",3,7,"actinoid","[227]","[Rn] 6d¹ 7s²","Solid","1050 °C","3200 °C","پژوهش پزشکی"],
+["Th","Thorium","توریم",3,9,"actinoid","232.04","[Rn] 6d² 7s²","Solid","1750 °C","4788 °C","پژوهش سوخت هسته‌ای"],
+["Pa","Protactinium","پروتاکتینیم",3,9,"actinoid","231.04","[Rn] 5f² 6d¹ 7s²","Solid","1568 °C","4027 °C","پژوهش هسته‌ای"],
+["U","Uranium","اورانیوم",3,9,"actinoid","238.03","[Rn] 5f³ 6d¹ 7s²","Solid","1132.2 °C","4131 °C","انرژی هسته‌ای"],
+["Np","Neptunium","نپتونیم",3,9,"actinoid","[237]","[Rn] 5f⁴ 6d¹ 7s²","Solid","644 °C","4000 °C","پژوهش هسته‌ای"],
+["Pu","Plutonium","پلوتونیم",3,9,"actinoid","[244]","[Rn] 5f⁶ 7s²","Solid","639.4 °C","3228 °C","پژوهش هسته‌ای"],
+["Am","Americium","آمریسیم",3,9,"actinoid","[243]","[Rn] 5f⁷ 7s²","Solid","1176 °C","2607 °C","آشکارساز دود"],
+["Cm","Curium","کوریم",3,9,"actinoid","[247]","[Rn] 5f⁷ 6d¹ 7s²","Solid","1345 °C","3110 °C","پژوهش علمی"],
+["Bk","Berkelium","برکلیم",3,9,"actinoid","[247]","[Rn] 5f⁹ 7s²","Solid","986 °C","—","پژوهش علمی"],
+["Cf","Californium","کالیفرنیم",3,9,"actinoid","[251]","[Rn] 5f¹⁰ 7s²","Solid","900 °C","—","منابع نوترونی پژوهشی"],
+["Es","Einsteinium","اینشتینیم",3,9,"actinoid","[252]","[Rn] 5f¹¹ 7s²","Solid","860 °C","—","پژوهش علمی"],
+["Fm","Fermium","فرمیم",3,9,"actinoid","[257]","[Rn] 5f¹² 7s²","Solid","1527 °C (estimated)","—","پژوهش علمی"],
+["Md","Mendelevium","مندلیفیم",3,9,"actinoid","[258]","[Rn] 5f¹³ 7s²","Solid","827 °C (estimated)","—","پژوهش علمی"],
+["No","Nobelium","نوبلیم",3,9,"actinoid","[259]","[Rn] 5f¹⁴ 7s²","Solid","827 °C (estimated)","—","پژوهش علمی"],
+["Lr","Lawrencium","لارنسیم",3,9,"actinoid","[266]","[Rn] 5f¹⁴ 7s² 7p¹","Solid","1627 °C (estimated)","—","پژوهش علمی"],
+["Rf","Rutherfordium","رادرفوردیم",4,7,"transition","[267]","[Rn] 5f¹⁴ 6d² 7s²","Solid","—","—","پژوهش هسته‌ای"],
+["Db","Dubnium","دوبنیم",5,7,"transition","[268]","[Rn] 5f¹⁴ 6d³ 7s²","Solid","—","—","پژوهش هسته‌ای"],
+["Sg","Seaborgium","سیبورگیم",6,7,"transition","[269]","[Rn] 5f¹⁴ 6d⁴ 7s²","Solid","—","—","پژوهش هسته‌ای"],
+["Bh","Bohrium","بوریم",7,7,"transition","[270]","[Rn] 5f¹⁴ 6d⁵ 7s²","Solid","—","—","پژوهش هسته‌ای"],
+["Hs","Hassium","هاسیم",8,7,"transition","[277]","[Rn] 5f¹⁴ 6d⁶ 7s²","Solid","—","—","پژوهش هسته‌ای"],
+["Mt","Meitnerium","مایتنریم",9,7,"transition","[278]","[Rn] 5f¹⁴ 6d⁷ 7s²","Solid","—","—","پژوهش هسته‌ای"],
+["Ds","Darmstadtium","دارمشتاتیم",10,7,"transition","[281]","[Rn] 5f¹⁴ 6d⁸ 7s²","Solid","—","—","پژوهش هسته‌ای"],
+["Rg","Roentgenium","رونتگنیم",11,7,"transition","[282]","[Rn] 5f¹⁴ 6d⁹ 7s²","Solid","—","—","پژوهش هسته‌ای"],
+["Cn","Copernicium","کوپرنیکیم",12,7,"transition","[285]","[Rn] 5f¹⁴ 6d¹⁰ 7s²","Gas (predicted)","—","—","پژوهش هسته‌ای"],
+["Nh","Nihonium","نیهونیم",13,7,"post","[286]","[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹","Solid (predicted)","—","—","پژوهش هسته‌ای"],
+["Fl","Flerovium","فلروویم",14,7,"post","[289]","[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²","Solid (predicted)","—","—","پژوهش هسته‌ای"],
+["Mc","Moscovium","مسکوویم",15,7,"post","[290]","[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³","Solid (predicted)","—","—","پژوهش هسته‌ای"],
+["Lv","Livermorium","لیورموریم",16,7,"post","[293]","[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴","Solid (predicted)","—","—","پژوهش هسته‌ای"],
+["Ts","Tennessine","تنسین",17,7,"halogen","[294]","[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵","Solid (predicted)","—","—","پژوهش هسته‌ای"],
+["Og","Oganesson","اوگانسون",18,7,"noble","[294]","[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶","Unknown","—","—","پژوهش هسته‌ای"]
+];
+
+const E=raw.map((a,i)=>({
+ z:i+1,s:a[0],en:a[1],fa:a[2],g:a[3],p:a[4],
+ cat:a[5],mass:a[6],conf:a[7],state:a[8],
+ mp:a[9],bp:a[10],uses:a[11]
+}));
+
+const C={
+ alkali:['فلزات قلیایی','Alkali metals'],
+ alkaline:['فلزات قلیایی خاکی','Alkaline earth metals'],
+ transition:['فلزات واسطه','Transition metals'],
+ post:['فلزات پس‌واسطه','Post-transition metals'],
+ metalloid:['شبه‌فلزها','Metalloids'],
+ nonmetal:['نافلزها','Nonmetals'],
+ halogen:['هالوژن‌ها','Halogens'],
+ noble:['گازهای نجیب','Noble gases'],
+ lanthanoid:['لانتانیدها','Lanthanides'],
+ actinoid:['اکتینیدها','Actinides']
+};
+
+let lang='fa',cat='all',chosen=0,onlyFav=false;
+let favs=JSON.parse(localStorage.getItem('pt-favs')||'[]');
+
+const $=id=>document.getElementById(id);
+const faNum=n=>String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const nm=e=>lang==='fa'?e.fa:e.en;
+const cn=c=>C[c][lang==='fa'?0:1];
+
+function pos(e){
+ if(e.z===2)return[18,1];
+ if(e.z===57)return[3,6];
+ if(e.z>=58&&e.z<=71)return[e.z-54,9];
+ if(e.z===89)return[3,7];
+ if(e.z>=90&&e.z<=103)return[e.z-86,10];
+ return[e.g,e.p];
+}
+
+function filters(){
+ let keys=['all',...Object.keys(C)];
+ let txt=lang==='fa'
+ ?['همه','قلیایی','قلیایی خاکی','واسطه','پس‌واسطه','شبه‌فلز','نافلز','هالوژن','نجیب','لانتانید','اکتینید']
+ :['All',...Object.values(C).map(x=>x[1])];
+
+ $('filters').innerHTML=keys.map((k,i)=>
+ `<button class="filter ${cat===k?'active':''}" data-c="${k}">${txt[i]}</button>`
+ ).join('');
+
+ $('filters').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{cat=b.dataset.c;onlyFav=false;draw()}
+ });
+
+ $('legend').innerHTML=Object.keys(C).map(k=>
+ `<span><i class="dot ${k}" style="background:var(--c)"></i>${cn(k)}</span>`
+ ).join('');
+}
+
+function match(e){
+ let q=$('search').value.trim().toLowerCase();
+ return (cat==='all'||e.cat===cat)
+ &&(!onlyFav||favs.includes(e.z))
+ &&(!q||[e.en,e.fa,e.s,String(e.z)].some(x=>x.toLowerCase().includes(q)));
+}
+
+function draw(){
+ filters();
+
+ let list=E.filter(match);
+ $('count').textContent=lang==='fa'
+ ?faNum(list.length)+' عنصر'
+ :list.length+' elements';
+
+ let t=$('table');
+ t.innerHTML='';
+
+ let map=new Map(list.map(e=>[pos(e).join('-'),e]));
+
+ for(let r=1;r<=7;r++){
+  for(let c=1;c<=18;c++){
+   let e=map.get(c+'-'+r);
+   if(e)t.appendChild(tile(e));
+   else{
+    let d=document.createElement('div');
+    d.style.gridColumn=c;
+    d.style.gridRow=r;
+    t.appendChild(d);
+   }
+  }
+ }
+
+ [
+  ['لانتانیدها','Lanthanides',8,58,71],
+  ['اکتینیدها','Actinides',10,90,103]
+ ].forEach(([fa,en,row,start,end])=>{
+  let h=document.createElement('div');
+  h.className='label';
+  h.style.gridRow=row;
+  h.textContent=lang==='fa'?fa:en;
+  t.appendChild(h);
+
+  E.filter(e=>e.z>=start&&e.z<=end&&match(e))
+   .forEach(e=>t.appendChild(tile(e)));
+ });
+
+ $('favs').innerHTML=favs.length
+ ?favs.map(z=>{
+   let e=E[z-1];
+   return `<div class="fav">
+    <span>${e.s} · ${nm(e)}</span>
+    <button data-z="${z}">${lang==='fa'?'نمایش':'View'}</button>
+   </div>`;
+  }).join('')
+ :(lang==='fa'?'هنوز عنصری انتخاب نشده است.':'No favorites yet.');
+
+ $('favs').querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>select(+b.dataset.z,false);
+ });
+
+ if(chosen)showDetail(E[chosen-1]);
+}
+
+function tile(e){
+ let b=document.createElement('button');
+ let [c,r]=pos(e);
+
+ b.className=`el ${e.cat} ${chosen===e.z?'sel':''}`;
+ b.style.gridColumn=c;
+ b.style.gridRow=r;
+
+ b.innerHTML=`
+ <span class="num">${lang==='fa'?faNum(e.z):e.z}</span>
+ <span class="sym">${e.s}</span>
+ <span class="nm">${nm(e)}</span>`;
+
+ b.onclick=()=>select(e.z);
+ return b;
+}
+
+function select(z,scroll=true){
+ chosen=z;
+ showDetail(E[z-1]);
+
+ document.querySelectorAll('.el').forEach(b=>b.classList.remove('sel'));
+
+ let target=[...document.querySelectorAll('.el')].find(b=>
+  b.querySelector('.num').textContent===(lang==='fa'?faNum(z):String(z))
+ );
+
+ if(target)target.classList.add('sel');
+
+ if(scroll&&innerWidth<700)
+  $('detail').scrollIntoView({behavior:'smooth'});
+}
+
+function showDetail(e){
+ let f=favs.includes(e.z);
+
+ let props=[
+ [lang==='fa'?'عدد اتمی':'Atomic number',e.z],
+ [lang==='fa'?'جرم اتمی':'Atomic mass',e.mass],
+ [lang==='fa'?'گروه':'Group',e.g],
+ [lang==='fa'?'دوره':'Period',e.p],
+ [lang==='fa'?'دسته':'Category',cn(e.cat)],
+ [lang==='fa'?'آرایش الکترونی':'Electron configuration',e.conf],
+ [lang==='fa'?'حالت':'State',e.state],
+ [lang==='fa'?'نقطه ذوب':'Melting point',e.mp],
+ [lang==='fa'?'نقطه جوش':'Boiling point',e.bp]
+ ];
+
+ $('detail').innerHTML=`
+ <div class="detailHead ${e.cat}">
+  <div class="big">${e.s}</div>
+  <div>
+   <h3>${nm(e)} <small style="color:#91a4bf">${e.en}</small></h3>
+   <p class="muted">${e.z} · ${cn(e.cat)}</p>
+   <button class="btn" id="toggle">
+    ${f?'★ حذف از منتخب‌ها':'☆ افزودن به منتخب‌ها'}
+   </button>
+  </div>
+ </div>
+
+ <div class="props">
+  ${props.map(p=>`
+   <div class="prop">
+    <small>${p[0]}</small>
+    <b>${p[1]}</b>
+   </div>`).join('')}
+ </div>
+
+ <div class="uses">
+  <b>${lang==='fa'?'کاربردها':'Common uses'}:</b><br>
+  ${e.uses}
+ </div>`;
+
+ $('toggle').onclick=()=>{
+  favs=f?favs.filter(x=>x!==e.z):[...favs,e.z];
+  localStorage.setItem('pt-favs',JSON.stringify(favs));
+  draw();
+ };
+}
+
+$('search').oninput=draw;
+
+$('clear').onclick=()=>{
+ $('search').value='';
+ cat='all';
+ onlyFav=false;
+ draw();
+};
+
+$('favOnly').onclick=()=>{
+ onlyFav=!onlyFav;
+ cat='all';
+ $('favOnly').classList.toggle('active',onlyFav);
+ draw();
+};
+
+$('lang').onclick=()=>{
+ lang=lang==='fa'?'en':'fa';
+
+ document.documentElement.lang=lang;
+ document.documentElement.dir=lang==='fa'?'rtl':'ltr';
+
+ $('title').textContent=lang==='fa'
+ ?'کاوشگر جدول تناوبی':'Periodic Table Explorer';
+
+ $('hero').textContent=lang==='fa'
+ ?'جهان عناصر را کشف کن':'Explore the world of elements';
+
+ $('sub').textContent=lang==='fa'
+ ?'روی هر عنصر بزن تا ویژگی‌ها و کاربردهای آن را ببینی.'
+ :'Select an element to explore its properties and uses.';
+
+ $('search').placeholder=lang==='fa'
+ ?'جست‌وجوی نام، نماد یا عدد اتمی...'
+ :'Search by name, symbol or atomic number...';
+
+ $('clear').textContent=lang==='fa'?'پاک کردن':'Clear';
+ $('favOnly').textContent=lang==='fa'?'★ علاقه‌مندی‌ها':'★ Favorites';
+ $('favTitle').textContent=lang==='fa'?'★ عناصر منتخب':'★ Favorites';
+
+ draw();
+};
+
+draw();
+</script>
+</body>
+
+<footer class="site-footer">
+  <p>ناشر: پویا جواهری نسب</p>
+  <p>Publisher: Pouya Javaheri Nasab</p>
+  <p>© تمامی حقوق محفوظ است</p>
+</footer>
